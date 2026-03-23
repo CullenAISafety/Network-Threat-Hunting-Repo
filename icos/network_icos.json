@@ -1,0 +1,76 @@
+{
+  "file": "sample_network.pcap",
+  "analysis_date": "2026-03-22",
+  "analyst": "Cullen E. Mathews",
+  "iocs": [
+    {
+      "type": "port_scan",
+      "source_ip": "192.168.1.99",
+      "target_ip": "192.168.1.30",
+      "ports": [20, 21, 22, 23, 24],
+      "protocol": "TCP",
+      "description": "Multiple TCP SYN packets to sequential ports; possible reconnaissance.",
+      "first_seen": "2026-03-22 17:00:01",
+      "last_seen": "2026-03-22 17:00:05",
+      "severity": "medium"
+    },
+    {
+      "type": "suspicious_ssh",
+      "source_ip": "192.168.1.10",
+      "target_ip": "8.8.8.8",
+      "port": 22,
+      "protocol": "TCP",
+      "description": "Unexpected SSH connection attempt from internal host to external IP.",
+      "timestamp": "2026-03-22 17:01:12",
+      "severity": "medium"
+    },
+    {
+      "type": "suspicious_ssh",
+      "source_ip": "192.168.1.20",
+      "target_ip": "1.1.1.1",
+      "port": 22,
+      "protocol": "TCP",
+      "description": "Unexpected SSH connection attempt from internal host to external IP.",
+      "timestamp": "2026-03-22 17:02:05",
+      "severity": "medium"
+    },
+    {
+      "type": "icmp_ping",
+      "source_ip": "192.168.1.10",
+      "target_ip": "8.8.8.8",
+      "protocol": "ICMP",
+      "description": "Normal ping to external host; included for completeness.",
+      "timestamp": "2026-03-22 17:00:00",
+      "severity": "low"
+    },
+    {
+      "type": "icmp_ping",
+      "source_ip": "192.168.1.20",
+      "target_ip": "1.1.1.1",
+      "protocol": "ICMP",
+      "description": "Normal ping to external host; included for completeness.",
+      "timestamp": "2026-03-22 17:00:02",
+      "severity": "low"
+    },
+    {
+      "type": "dns_query",
+      "source_ip": "192.168.1.10",
+      "target_ip": "8.8.8.8",
+      "protocol": "UDP",
+      "query": "example.com",
+      "description": "DNS query to public resolver.",
+      "timestamp": "2026-03-22 17:00:03",
+      "severity": "low"
+    },
+    {
+      "type": "dns_query",
+      "source_ip": "192.168.1.20",
+      "target_ip": "1.1.1.1",
+      "protocol": "UDP",
+      "query": "example.com",
+      "description": "DNS query to public resolver.",
+      "timestamp": "2026-03-22 17:00:04",
+      "severity": "low"
+    }
+  ]
+}
