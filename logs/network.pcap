@@ -1,0 +1,51 @@
+from scapy.all import *
+import random
+
+packets = []
+
+# Hosts
+internal_hosts = ["192.168.1.10", "192.168.1.20"]
+external_hosts = ["8.8.8.8", "1.1.1.1"]
+
+# Normal ICMP traffic
+for host in external_hosts:
+    pkt = IP(src=random.choice(internal_hosts), dst=host)/ICMP()
+    packets.append(pkt)
+
+# Normal HTTP traffic
+for host in external_hosts:
+    pkt = IP(src=random.choice(internal_hosts), dst=host)/TCP(dport=80, sport=random.randint(1024,65535))/Raw(load="GET /index.html HTTP/1.1\r\nHost: example.com\r\n\r\n")
+    packets.append(pkt)
+
+# DNS queries (UDP)
+for host in ["8.8.8.8", "1.1.1.1"]:
+    pkt = IP(src=random.choice(internal_hosts), dst=host)/UDP(dport=53, sport=random.randint(1024,65535))/Raw(load="\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01")
+    packets.append(pkt)
+
+# SSH connections (TCP)
+for _ in range(2):
+    pkt = IP(src=random.choice(internal_hosts), dst=random.choice(external_hosts))/TCP(dport=22, sport=random.randint(1024,65535), flags="S")
+    packets.append(pkt)
+
+# Suspicious port scan simulation (multiple TCP SYNs to sequential ports)
+scan_target = "192.168.1.30"
+for port in range(20, 25):
+    pkt = IP(src="192.168.1.99", dst=scan_target)/TCP(dport=port, sport=random.randint(1024,65535), flags="S")
+    packets.append(pkt)
+
+# Save the generated packets
+wrpcap("sample_network.pcap", packets)
+
+print(f"sample_network.pcap created with {len(packets)} packets.")
+Features included:
+Normal traffic: ICMP, HTTP, DNS, SSH
+Suspicious traffic: Small TCP port scan
+Multiple hosts: Internal and external simulation
+
+Steps to run:
+Install Scapy if not already:
+pip install scapy
+Save the script as generate_sample_pcap.py.
+Run it:
+python generate_sample_pcap.py
+You’ll get a sample_network.pcap ready for analysis in Wireshark, Zeek, or Python SOC labs.
