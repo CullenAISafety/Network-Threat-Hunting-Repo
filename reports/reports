@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""
+final_network_incident_report.py
+
+Generates a PDF Network Incident Report from:
+- sample_network.pcap
+- traffic_parser analysis
+- network_iocs.json
+
+Author: Cullen E. Mathews
+Date: 2026-03-22
+"""
+
+from reportlab.lib.pagesizes import LETTER
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import json
+from datetime import datetime
+
+# Input files
+IOCS_FILE = "network_iocs.json"
+PDF_FILE = "final_network_incident_report.pdf"
+
+# Load IoCs
+with open(IOCS_FILE) as f:
+    iocs_data = json.load(f)
+
+styles = getSampleStyleSheet()
+story = []
+
+# Title
+story.append(Paragraph("Network Incident Report", styles['Title']))
+story.append(Spacer(1, 12))
+
+# Metadata
+story.append(Paragraph(f"File analyzed: {iocs_data['file']}", styles['Normal']))
+story.append(Paragraph(f"Analyst: {iocs_data['analyst']}", styles['Normal']))
+story.append(Paragraph(f"Date: {iocs_data['analysis_date']}", styles['Normal']))
+story.append(Spacer(1, 12))
+
+# Section 1: Executive Summary
+story.append(Paragraph("1. Executive Summary", styles['Heading2']))
+story.append(Paragraph(
+    "This report summarizes the analysis of network traffic captured in the sample_network.pcap file. "
+    "Suspicious activity such as port scans, unusual SSH connections, and normal traffic patterns have been identified. "
+    "All Indicators of Compromise (IoCs) are documented below.", styles['Normal']))
+story.append(Spacer(1, 12))
+
+# Section 2: IoCs Table
+story.append(Paragraph("2. Indicators of Compromise (IoCs)", styles['Heading2']))
+
+table_data = [
+    ["Type", "Source IP", "Target IP", "Port(s)", "Protocol", "Timestamp/Seen", "Severity"]
+]
+
+for ioc in iocs_data["iocs"]:
+    ports = ioc.get("port") or ioc.get("ports") or "-"
+    timestamp = ioc.get("timestamp") or f"{ioc.get('first_seen','-')} / {ioc.get('last_seen','-')}"
+    table_data.append([
+        ioc["type"],
+        ioc["source_ip"],
+        ioc["target_ip"],
+        str(ports),
+        ioc["protocol"],
+        timestamp,
+        ioc.get("severity","-")
+    ])
+
+table = Table(table_data, repeatRows=1)
+table.setStyle(TableStyle([
+    ('BACKGROUND', (0,0), (-1,0), colors.darkblue),
+    ('TEXTCOLOR',(0,0),(-1,0),colors.whitesmoke),
+    ('ALIGN',(0,0),(-1,-1),'CENTER'),
+    ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+    ('FONTSIZE',(0,0),(-1,0),10),
+    ('BOTTOMPADDING', (0,0), (-1,0), 6),
+    ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
+]))
+story.append(table)
+story.append(Spacer(1, 12))
+
+# Section 3: Analysis Summary
+story.append(Paragraph("3. Analysis Summary", styles['Heading2']))
+story.append(Paragraph(
+    "The analysis detected the following key points:\n"
+    "- A port scan from 192.168.1.99 to 192.168.1.30 targeting multiple TCP ports.\n"
+    "- Suspicious SSH connection attempts from internal hosts to external IPs.\n"
+    "- Normal ICMP and DNS traffic for baseline comparisons.\n"
+    "- Recommendations include monitoring repeated TCP SYNs, verifying SSH access, and inspecting UDP/ICMP traffic.",
+    styles['Normal']))
+story.append(Spacer(1, 12))
+
+# Section 4: Recommendations
+story.append(Paragraph("4. Recommendations", styles['Heading2']))
+story.append(Paragraph(
+    "1. Implement IDS/IPS rules to alert on TCP SYN scans.\n"
+    "2. Audit and restrict SSH access from internal hosts.\n"
+    "3. Maintain baseline traffic profiles for ICMP and DNS.\n"
+    "4. Expand monitoring windows to capture longer traffic patterns.\n"
+    "5. Continuously update IoCs in SIEM systems for automated alerts.",
+    styles['Normal']))
+
+# Footer
+story.append(Spacer(1, 24))
+story.append(Paragraph(f"Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+
+# Generate PDF
+doc = SimpleDocTemplate(PDF_FILE, pagesize=LETTER)
+doc.build(story)
+
+print(f"PDF Incident Report generated: {PDF_FILE}")
